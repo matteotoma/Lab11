@@ -5,9 +5,12 @@
 package it.polito.tdp.rivers;
 
 import java.net.URL;
+
 import java.util.ResourceBundle;
 
 import it.polito.tdp.rivers.model.Model;
+import it.polito.tdp.rivers.model.River;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -25,7 +28,7 @@ public class FXMLController {
     private URL location;
 
     @FXML // fx:id="boxRiver"
-    private ComboBox<?> boxRiver; // Value injected by FXMLLoader
+    private ComboBox<River> boxRiver; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtStartDate"
     private TextField txtStartDate; // Value injected by FXMLLoader
@@ -48,7 +51,42 @@ public class FXMLController {
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
 
-    @FXML // This method is called by the FXMLLoader when initialization is complete
+    @FXML
+    void doSimula(ActionEvent event) {
+    	txtResult.clear();
+    	
+    	int k;
+    	try {
+    		k = Integer.parseInt(this.txtK.getText());
+    	} catch(Exception e) {
+    		txtResult.appendText("Errore inserimento fattore di scala!");
+    		return;
+    	}
+    	
+    	River r = this.boxRiver.getValue();
+    	if(r == null) {
+    		txtResult.appendText("Devi selezionare un fiume!");
+    		return;
+    	}
+    	model.simula(k, model.getFmed(r), model.getFlows(r));
+    	txtResult.appendText(String.format("Numero giorni in cui non si è potuta garantire l’erogazione minima: %d\n", model.getGiorniSenzaErogazioneMinima()));
+    	txtResult.appendText(String.format("Livello medio C del bacino: %f", model.getCmed()));
+    }
+
+    @FXML
+    void getParametri(ActionEvent event) {
+    	River r = this.boxRiver.getValue();
+    	if(r == null) {
+    		txtResult.appendText("Devi selezionare un fiume!");
+    		return;
+    	}
+    	txtStartDate.setText(model.getDateStart(r).toString());
+    	txtEndDate.setText(model.getDateEnd(r).toString());
+    	txtNumMeasurements.setText(model.getTotMisurazioni(r)+"");
+    	txtFMed.setText(model.getFmed(r)+"");
+    }
+
+    @FXML
     void initialize() {
         assert boxRiver != null : "fx:id=\"boxRiver\" was not injected: check your FXML file 'Scene.fxml'.";
         assert txtStartDate != null : "fx:id=\"txtStartDate\" was not injected: check your FXML file 'Scene.fxml'.";
@@ -58,9 +96,15 @@ public class FXMLController {
         assert txtK != null : "fx:id=\"txtK\" was not injected: check your FXML file 'Scene.fxml'.";
         assert btnSimula != null : "fx:id=\"btnSimula\" was not injected: check your FXML file 'Scene.fxml'.";
         assert txtResult != null : "fx:id=\"txtResult\" was not injected: check your FXML file 'Scene.fxml'.";
+
     }
     
     public void setModel(Model model) {
     	this.model = model;
+    	setBox();
     }
+
+	private void setBox() {
+		this.boxRiver.getItems().addAll(model.getAllRivers());
+	}
 }
